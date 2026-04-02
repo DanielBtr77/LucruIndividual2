@@ -1,0 +1,10 @@
+Problema 1 — Sortare (problema1.c)
+Program cu meniu care aloca dinamic un tablou de numere întregi și implementează doi algoritmi de sortare:
+
+Selection Sort — algoritm simplu de sortare cu complexitate O(n²)
+Merge Sort — algoritm eficient bazat pe tehnica divide et impera, complexitate O(n log n)
+
+La fiecare sortare se afișează timpul de execuție. Programul include și o analiză empirică automată care măsoară timpii pentru tablouri de dimensiune 100, 1000, 10000 și 100000.
+Compilare și rulare:
+gcc problema1.c -o problema1
+./problema1
