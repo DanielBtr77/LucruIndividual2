@@ -1,0 +1,165 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+/*
+ * Problema 3 - Fibonacci cu numere mari
+ * fib(1000000) are peste 200000 de cifre, nu putem folosi int sau long long.
+ * Vom implementa o structura simpla pentru numere mari stocate ca vector de cifre (baza 10).
+ */
+
+#define MAX_CIFRE 250000
+
+typedef struct {
+    int cifre[MAX_CIFRE];
+    int lungime;
+} BigInt;
+
+void bigint_zero(BigInt *a) {
+    a->lungime = 1;
+    a->cifre[0] = 0;
+}
+
+void bigint_one(BigInt *a) {
+    a->lungime = 1;
+    a->cifre[0] = 1;
+}
+
+void bigint_copy(BigInt *dest, const BigInt *src) {
+    dest->lungime = src->lungime;
+    memcpy(dest->cifre, src->cifre, src->lungime * sizeof(int));
+}
+
+/* c = a + b  (c trebuie sa fie un buffer separat de a si b) */
+void bigint_add(BigInt *c, const BigInt *a, const BigInt *b) {
+    int transport = 0;
+    int lungime_max = a->lungime > b->lungime ? a->lungime : b->lungime;
+    int i;
+
+    for (i = 0; i < lungime_max || transport; i++) {
+        int suma = transport;
+        if (i < a->lungime) suma += a->cifre[i];
+        if (i < b->lungime) suma += b->cifre[i];
+        c->cifre[i] = suma % 10;
+        transport = suma / 10;
+    }
+    c->lungime = i;
+}
+
+void bigint_print(const BigInt *a) {
+    for (int i = a->lungime - 1; i >= 0; i--) {
+        printf("%d", a->cifre[i]);
+    }
+    printf("\n");
+}
+
+/* Calculam fibonacci iterativ cu 3 BigInt-uri alocate pe heap */
+void fibonacci_calcul(int n, BigInt *rezultat) {
+    BigInt *prev = (BigInt*)malloc(sizeof(BigInt));
+    BigInt *curr = (BigInt*)malloc(sizeof(BigInt));
+    BigInt *tmp  = (BigInt*)malloc(sizeof(BigInt));
+
+    if (!prev || !curr || !tmp) {
+        printf("Eroare la alocarea memoriei!\n");
+        return;
+    }
+
+    bigint_zero(prev);
+    bigint_one(curr);
+
+    if (n == 0) {
+        bigint_copy(rezultat, prev);
+        free(prev); free(curr); free(tmp);
+        return;
+    }
+    if (n == 1) {
+        bigint_copy(rezultat, curr);
+        free(prev); free(curr); free(tmp);
+        return;
+    }
+
+    for (int i = 2; i <= n; i++) {
+        bigint_add(tmp, prev, curr);
+        bigint_copy(prev, curr);
+        bigint_copy(curr, tmp);
+    }
+
+    bigint_copy(rezultat, curr);
+    free(prev);
+    free(curr);
+    free(tmp);
+}
+
+void calcul_fibonacci_cu_timp() {
+    int n;
+    printf("Introduceti pozitia N (intre 50 si 1000000): ");
+    scanf("%d", &n);
+
+    if (n < 50 || n > 1000000) {
+        printf("N trebuie sa fie intre 50 si 1000000!\n");
+        return;
+    }
+
+    printf("Se calculeaza fib(%d)...\n", n);
+
+    BigInt *rez = (BigInt*)malloc(sizeof(BigInt));
+    if (!rez) { printf("Eroare memorie!\n"); return; }
+
+    clock_t start = clock();
+    fibonacci_calcul(n, rez);
+    clock_t end = clock();
+
+    printf("fib(%d) = ", n);
+    bigint_print(rez);
+
+    double timp = (double)(end - start) / CLOCKS_PER_SEC * 1000.0;
+    printf("Timp executie: %.4f ms\n", timp);
+
+    free(rez);
+}
+
+void analiza_empirica() {
+    int marimi[] = {50, 100, 1000, 10000, 100000, 1000000};
+    int nr_marimi = 6;
+
+    printf("\n=== Analiza empirica Fibonacci ===\n");
+    printf("%-12s %-20s\n", "N", "Timp (ms)");
+    printf("----------------------------------\n");
+
+    BigInt *rez = (BigInt*)malloc(sizeof(BigInt));
+    if (!rez) { printf("Eroare memorie!\n"); return; }
+
+    for (int t = 0; t < nr_marimi; t++) {
+        int n = marimi[t];
+        clock_t start = clock();
+        fibonacci_calcul(n, rez);
+        clock_t end = clock();
+        double timp = (double)(end - start) / CLOCKS_PER_SEC * 1000.0;
+        printf("%-12d %-20.4f\n", n, timp);
+    }
+
+    free(rez);
+}
+
+int main() {
+    int optiune;
+
+    do {
+        printf("\n=== Meniu Problema 3 - Fibonacci ===\n");
+        printf("1. Calculeaza fib(N) cu afisarea rezultatului si timpului\n");
+        printf("2. Analiza empirica\n");
+        printf("0. Iesire\n");
+        printf("Alegeti optiunea: ");
+        scanf("%d", &optiune);
+
+        switch (optiune) {
+            case 1: calcul_fibonacci_cu_timp(); break;
+            case 2: analiza_empirica(); break;
+            case 0: printf("La revedere!\n"); break;
+            default: printf("Optiune invalida!\n");
+        }
+    } while (optiune != 0);
+
+    return 0;
+}
