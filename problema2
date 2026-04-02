@@ -1,0 +1,207 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+int *tablou = NULL;
+int n = 0;
+
+void initializare() {
+    printf("Introduceti marimea tabloului: ");
+    scanf("%d", &n);
+
+    if (tablou != NULL) {
+        free(tablou);
+    }
+
+    tablou = (int*)malloc(n * sizeof(int));
+    if (tablou == NULL) {
+        printf("Eroare la alocarea memoriei!\n");
+        return;
+    }
+
+    srand(time(NULL));
+    for (int i = 0; i < n; i++) {
+        tablou[i] = rand() % 10000;
+    }
+    printf("Tabloul a fost initializat cu %d numere aleatorii.\n", n);
+}
+
+void afisare() {
+    if (tablou == NULL || n == 0) {
+        printf("Tabloul este gol!\n");
+        return;
+    }
+    printf("Tablou: ");
+    for (int i = 0; i < n; i++) {
+        printf("%d ", tablou[i]);
+    }
+    printf("\n");
+}
+
+void eliberare() {
+    if (tablou != NULL) {
+        free(tablou);
+        tablou = NULL;
+        n = 0;
+        printf("Memoria a fost eliberata.\n");
+    } else {
+        printf("Tabloul este deja eliberat.\n");
+    }
+}
+
+/* ---- Linear Search ---- */
+int linear_search(int *arr, int sz, int target) {
+    for (int i = 0; i < sz; i++) {
+        if (arr[i] == target) return i;
+    }
+    return -1;
+}
+
+void cautare_liniara() {
+    if (tablou == NULL || n == 0) {
+        printf("Tabloul este gol!\n");
+        return;
+    }
+    int target;
+    printf("Introduceti numarul cautat: ");
+    scanf("%d", &target);
+
+    clock_t start = clock();
+    int rezultat = linear_search(tablou, n, target);
+    clock_t end = clock();
+
+    double timp = (double)(end - start) / CLOCKS_PER_SEC * 1000000.0;
+
+    if (rezultat != -1)
+        printf("Numarul %d gasit la pozitia %d\n", target, rezultat);
+    else
+        printf("Numarul %d nu a fost gasit.\n", target);
+
+    printf("Timp executie: %.4f microsecunde\n", timp);
+}
+
+/* ---- Binary Search ---- */
+/* binary search necesita tablou sortat */
+int cmp(const void *a, const void *b) {
+    return (*(int*)a - *(int*)b);
+}
+
+int binary_search(int *arr, int sz, int target) {
+    int stanga = 0, dreapta = sz - 1;
+    while (stanga <= dreapta) {
+        int mijloc = stanga + (dreapta - stanga) / 2;
+        if (arr[mijloc] == target) return mijloc;
+        else if (arr[mijloc] < target) stanga = mijloc + 1;
+        else dreapta = mijloc - 1;
+    }
+    return -1;
+}
+
+void cautare_binara() {
+    if (tablou == NULL || n == 0) {
+        printf("Tabloul este gol!\n");
+        return;
+    }
+    int target;
+    printf("Introduceti numarul cautat: ");
+    scanf("%d", &target);
+
+    /* sortam o copie pentru binary search */
+    int *cop = (int*)malloc(n * sizeof(int));
+    for (int i = 0; i < n; i++) cop[i] = tablou[i];
+    qsort(cop, n, sizeof(int), cmp);
+
+    clock_t start = clock();
+    int rezultat = binary_search(cop, n, target);
+    clock_t end = clock();
+
+    double timp = (double)(end - start) / CLOCKS_PER_SEC * 1000000.0;
+
+    if (rezultat != -1)
+        printf("Numarul %d gasit (in tabloul sortat) la pozitia %d\n", target, rezultat);
+    else
+        printf("Numarul %d nu a fost gasit.\n", target);
+
+    printf("Timp executie: %.4f microsecunde\n", timp);
+    free(cop);
+}
+
+/* ---- Analiza empirica: 10000 cautari ---- */
+void analiza_empirica() {
+    int marimi[] = {100, 1000, 10000, 100000};
+    int nr_marimi = 4;
+    int NR_CAUTARI = 10000;
+
+    printf("\n=== Analiza empirica: %d cautari ===\n", NR_CAUTARI);
+    printf("%-12s %-25s %-25s\n", "N", "Linear Search (ms)", "Binary Search (ms)");
+    printf("------------------------------------------------------------\n");
+
+    for (int t = 0; t < nr_marimi; t++) {
+        int sz = marimi[t];
+        int *arr = (int*)malloc(sz * sizeof(int));
+        int *arr_sortat = (int*)malloc(sz * sizeof(int));
+
+        srand(42);
+        for (int i = 0; i < sz; i++) {
+            arr[i] = rand() % 100000;
+            arr_sortat[i] = arr[i];
+        }
+        qsort(arr_sortat, sz, sizeof(int), cmp);
+
+        srand(123);
+        double t_linear = 0, t_binary = 0;
+
+        clock_t s1 = clock();
+        for (int k = 0; k < NR_CAUTARI; k++) {
+            int target = rand() % 100000;
+            linear_search(arr, sz, target);
+        }
+        clock_t e1 = clock();
+        t_linear = (double)(e1 - s1) / CLOCKS_PER_SEC * 1000.0;
+
+        srand(123);
+        clock_t s2 = clock();
+        for (int k = 0; k < NR_CAUTARI; k++) {
+            int target = rand() % 100000;
+            binary_search(arr_sortat, sz, target);
+        }
+        clock_t e2 = clock();
+        t_binary = (double)(e2 - s2) / CLOCKS_PER_SEC * 1000.0;
+
+        printf("%-12d %-25.4f %-25.4f\n", sz, t_linear, t_binary);
+
+        free(arr);
+        free(arr_sortat);
+    }
+}
+
+int main() {
+    int optiune;
+
+    do {
+        printf("\n=== Meniu Problema 2 - Cautare ===\n");
+        printf("1. Initializarea tabloului\n");
+        printf("2. Afisarea tabloului\n");
+        printf("3. Eliberarea memoriei\n");
+        printf("4. Cautare liniara (Linear Search)\n");
+        printf("5. Cautare binara (Binary Search)\n");
+        printf("6. Analiza empirica\n");
+        printf("0. Iesire\n");
+        printf("Alegeti optiunea: ");
+        scanf("%d", &optiune);
+
+        switch (optiune) {
+            case 1: initializare(); break;
+            case 2: afisare(); break;
+            case 3: eliberare(); break;
+            case 4: cautare_liniara(); break;
+            case 5: cautare_binara(); break;
+            case 6: analiza_empirica(); break;
+            case 0: printf("La revedere!\n"); break;
+            default: printf("Optiune invalida!\n");
+        }
+    } while (optiune != 0);
+
+    if (tablou != NULL) free(tablou);
+    return 0;
+}
