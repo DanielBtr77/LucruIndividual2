@@ -1,0 +1,12 @@
+Problema 3 — Fibonacci cu numere mari (problema3.c)
+Program care calculează numere Fibonacci pentru poziții foarte mari (între 50 și 1.000.000). Deoarece fib(100) are deja 21 de cifre, iar fib(1.000.000) are peste 200.000 de cifre, tipurile standard int sau long long nu sunt suficiente.
+A fost implementată o structură BigInt proprie, care stochează numărul cifră cu cifră și suportă adunare cu transport. Calculul este iterativ (nu recursiv) pentru a evita stack overflow.
+Exemple verificate:
+
+fib(50) = 12586269025
+fib(100) = 354224848179261915075
+
+Programul include și o analiză empirică a timpului de calcul pentru N = 50, 100, 1000, 10000, 100000 și 1.000.000.
+Compilare și rulare:
+gcc problema3.c -o problema3
+./problema3
