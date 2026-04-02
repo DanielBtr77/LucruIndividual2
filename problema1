@@ -1,0 +1,214 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+int *tablou = NULL;
+int n = 0;
+
+void initializare() {
+    printf("Introduceti marimea tabloului: ");
+    scanf("%d", &n);
+
+    if (tablou != NULL) {
+        free(tablou);
+    }
+
+    tablou = (int*)malloc(n * sizeof(int));
+    if (tablou == NULL) {
+        printf("Eroare la alocarea memoriei!\n");
+        return;
+    }
+
+    srand(time(NULL));
+    for (int i = 0; i < n; i++) {
+        tablou[i] = rand() % 10000;
+    }
+    printf("Tabloul a fost initializat cu %d numere aleatorii.\n", n);
+}
+
+void afisare() {
+    if (tablou == NULL || n == 0) {
+        printf("Tabloul este gol!\n");
+        return;
+    }
+    printf("Tablou: ");
+    for (int i = 0; i < n; i++) {
+        printf("%d ", tablou[i]);
+    }
+    printf("\n");
+}
+
+void eliberare() {
+    if (tablou != NULL) {
+        free(tablou);
+        tablou = NULL;
+        n = 0;
+        printf("Memoria a fost eliberata.\n");
+    } else {
+        printf("Tabloul este deja eliberat.\n");
+    }
+}
+
+/* copiem tabloul ca sa nu il stricam */
+int* copiaza() {
+    int *cop = (int*)malloc(n * sizeof(int));
+    for (int i = 0; i < n; i++) {
+        cop[i] = tablou[i];
+    }
+    return cop;
+}
+
+/* ---- Selection Sort ---- */
+void selection_sort(int *arr, int sz) {
+    for (int i = 0; i < sz - 1; i++) {
+        int min_idx = i;
+        for (int j = i + 1; j < sz; j++) {
+            if (arr[j] < arr[min_idx]) {
+                min_idx = j;
+            }
+        }
+        int tmp = arr[min_idx];
+        arr[min_idx] = arr[i];
+        arr[i] = tmp;
+    }
+}
+
+void sortare_simpla() {
+    if (tablou == NULL || n == 0) {
+        printf("Tabloul este gol!\n");
+        return;
+    }
+    int *cop = copiaza();
+
+    clock_t start = clock();
+    selection_sort(cop, n);
+    clock_t end = clock();
+
+    double timp = (double)(end - start) / CLOCKS_PER_SEC * 1000.0;
+    printf("Selection sort finalizat in %.4f ms\n", timp);
+
+    free(cop);
+}
+
+/* ---- Merge Sort ---- */
+void merge(int *arr, int l, int m, int r) {
+    int n1 = m - l + 1;
+    int n2 = r - m;
+
+    int *L = (int*)malloc(n1 * sizeof(int));
+    int *R = (int*)malloc(n2 * sizeof(int));
+
+    for (int i = 0; i < n1; i++) L[i] = arr[l + i];
+    for (int i = 0; i < n2; i++) R[i] = arr[m + 1 + i];
+
+    int i = 0, j = 0, k = l;
+    while (i < n1 && j < n2) {
+        if (L[i] <= R[j]) {
+            arr[k] = L[i];
+            i++;
+        } else {
+            arr[k] = R[j];
+            j++;
+        }
+        k++;
+    }
+    while (i < n1) { arr[k] = L[i]; i++; k++; }
+    while (j < n2) { arr[k] = R[j]; j++; k++; }
+
+    free(L);
+    free(R);
+}
+
+void merge_sort(int *arr, int l, int r) {
+    if (l < r) {
+        int m = l + (r - l) / 2;
+        merge_sort(arr, l, m);
+        merge_sort(arr, m + 1, r);
+        merge(arr, l, m, r);
+    }
+}
+
+void sortare_avansata() {
+    if (tablou == NULL || n == 0) {
+        printf("Tabloul este gol!\n");
+        return;
+    }
+    int *cop = copiaza();
+
+    clock_t start = clock();
+    merge_sort(cop, 0, n - 1);
+    clock_t end = clock();
+
+    double timp = (double)(end - start) / CLOCKS_PER_SEC * 1000.0;
+    printf("Merge sort finalizat in %.4f ms\n", timp);
+
+    free(cop);
+}
+
+/* ---- Analiza empirica ---- */
+void analiza_empirica() {
+    int marimi[] = {100, 1000, 10000, 100000};
+    int nr_marimi = 4;
+
+    printf("\n=== Analiza empirica ===\n");
+    printf("%-12s %-20s %-20s\n", "N", "Selection Sort (ms)", "Merge Sort (ms)");
+    printf("------------------------------------------------------\n");
+
+    for (int t = 0; t < nr_marimi; t++) {
+        int sz = marimi[t];
+        int *arr1 = (int*)malloc(sz * sizeof(int));
+        int *arr2 = (int*)malloc(sz * sizeof(int));
+
+        srand(42);
+        for (int i = 0; i < sz; i++) {
+            arr1[i] = rand() % 100000;
+            arr2[i] = arr1[i];
+        }
+
+        clock_t s1 = clock();
+        selection_sort(arr1, sz);
+        clock_t e1 = clock();
+        double t1 = (double)(e1 - s1) / CLOCKS_PER_SEC * 1000.0;
+
+        clock_t s2 = clock();
+        merge_sort(arr2, 0, sz - 1);
+        clock_t e2 = clock();
+        double t2 = (double)(e2 - s2) / CLOCKS_PER_SEC * 1000.0;
+
+        printf("%-12d %-20.4f %-20.4f\n", sz, t1, t2);
+
+        free(arr1);
+        free(arr2);
+    }
+}
+
+int main() {
+    int optiune;
+
+    do {
+        printf("\n=== Meniu Problema 1 - Sortare ===\n");
+        printf("1. Initializarea tabloului\n");
+        printf("2. Afisarea tabloului\n");
+        printf("3. Eliberarea memoriei\n");
+        printf("4. Sortare simpla (Selection Sort)\n");
+        printf("5. Sortare avansata (Merge Sort)\n");
+        printf("6. Analiza empirica\n");
+        printf("0. Iesire\n");
+        printf("Alegeti optiunea: ");
+        scanf("%d", &optiune);
+
+        switch (optiune) {
+            case 1: initializare(); break;
+            case 2: afisare(); break;
+            case 3: eliberare(); break;
+            case 4: sortare_simpla(); break;
+            case 5: sortare_avansata(); break;
+            case 6: analiza_empirica(); break;
+            case 0: printf("La revedere!\n"); break;
+            default: printf("Optiune invalida!\n");
+        }
+    } while (optiune != 0);
+
+    if (tablou != NULL) free(tablou);
+    return 0;
+}
