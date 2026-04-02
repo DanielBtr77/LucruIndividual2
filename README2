@@ -1,0 +1,10 @@
+Problema 2 — Căutare (problema2.c)
+Program cu meniu care aloca dinamic un tablou de numere întregi și implementează doi algoritmi de căutare:
+
+Linear Search — parcurge tabloul element cu element, funcționează pe orice tablou
+Binary Search — caută într-un tablou sortat înjumătățind intervalul la fiecare pas, mult mai rapid
+
+La fiecare căutare se afișează timpul de execuție. Programul include o analiză empirică care execută 10.000 de căutări și măsoară timpul total pentru N = 100, 1000, 10000 și 100000.
+Compilare și rulare:
+gcc problema2.c -o problema2
+./problema2
